@@ -270,8 +270,8 @@ export class Decorator {
 			const openFence = match[1] ?? '';
 			const closeFence = match[4] ?? '';
 			const contentStart = match.index + openFence.length;
-			const contentEnd = match.index + match[0].length - closeFence.length;
-			if (contentStart < contentEnd) {
+			const contentEnd = match.index + match[0].length - closeFence.length - 1;
+			if (contentStart <= contentEnd) {
 				const parent = this.range(match.index, match.index + match[0].length);
 				decorations.push({range: this.range(contentStart, contentEnd), parent, type: this.blockCodeBackgroundDecorationType!});
 			}
