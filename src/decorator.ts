@@ -118,9 +118,6 @@ export class Decorator {
 
 		const bgColor = config.get<string>('codeBlockBackgroundColor', '#EEEEEEBB');
 		this.updateCodeBackgroundDecorationTypes(bgColor);
-		if (this.inlineCodeBackgroundDecorationType && this.blockCodeBackgroundDecorationType) {
-			codeDecorations.push(...this.codeBackground(documentText));
-		}
 
 		if (config.get<boolean>('simpleURI', true)) {
 			allDecorations.push(...this.simpleURI(documentText));
@@ -177,6 +174,23 @@ export class Decorator {
 		decorationMap.forEach((ranges, decorationType) => {
 			this.activeEditor!.setDecorations(decorationType, ranges);
 		});
+
+		// Background decorations are applied unconditionally (not hidden on cursor entry)
+		if (this.inlineCodeBackgroundDecorationType && this.blockCodeBackgroundDecorationType) {
+			const bgDecorations = this.codeBackground(documentText);
+			const inlineBgRanges: Range[] = [];
+			const blockBgRanges: Range[] = [];
+			for (const d of bgDecorations) {
+				if (d.type === this.inlineCodeBackgroundDecorationType) {
+					inlineBgRanges.push(d.range);
+				} else {
+					blockBgRanges.push(d.range);
+				}
+			}
+
+			this.activeEditor.setDecorations(this.inlineCodeBackgroundDecorationType, inlineBgRanges);
+			this.activeEditor.setDecorations(this.blockCodeBackgroundDecorationType, blockBgRanges);
+		}
 	}
 
 	/**
