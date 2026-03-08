@@ -2,7 +2,7 @@ import {
 	Range, type TextEditor, workspace, type TextEditorDecorationType,
 } from 'vscode';
 import {
-	DefaultColorDecorationType, HideDecorationType, XxlTextDecorationType, XlTextDecorationType, LTextDecorationType, URIDecorationType, SpaceAfterDecorationType, HorizontalLineDecorationType,
+	DefaultColorDecorationType, HideDecorationType, XxlTextDecorationType, XlTextDecorationType, LTextDecorationType, URIDecorationType, SpaceAfterDecorationType, HorizontalLineDecorationType, InlineCodeBackgroundDecorationType, BlockCodeBackgroundDecorationType,
 } from './decorations';
 import {type LinkData, type MarkdownDocumentLinkProvider} from './documentLinkProvider';
 
@@ -56,6 +56,12 @@ export class Decorator {
 
 	horizontalLineDecorationType = HorizontalLineDecorationType();
 
+	private inlineCodeBackgroundDecorationType: TextEditorDecorationType | undefined;
+
+	private blockCodeBackgroundDecorationType: TextEditorDecorationType | undefined;
+
+	private codeBackgroundColor: string | undefined;
+
 	setLinkProvider(linkProvider: MarkdownDocumentLinkProvider) {
 		this.linkProvider = linkProvider;
 	}
@@ -108,6 +114,12 @@ export class Decorator {
 
 		if (config.get<boolean>('blockCode', true)) {
 			codeDecorations.push(...this.blockCode(documentText));
+		}
+
+		const bgColor = config.get<string>('codeBlockBackgroundColor', '#EEEEEE');
+		this.updateCodeBackgroundDecorationTypes(bgColor);
+		if (this.inlineCodeBackgroundDecorationType && this.blockCodeBackgroundDecorationType) {
+			codeDecorations.push(...this.codeBackground(documentText));
 		}
 
 		if (config.get<boolean>('simpleURI', true)) {
@@ -220,6 +232,38 @@ export class Decorator {
 	blockCode(documentText: string): Decoration[] {
 		return this.getSymmetricHideRanges(documentText, BLOCK_CODE_REGEX)
 			.map(({range, parent}) => ({range, parent, type: this.hideDecorationType}));
+	}
+
+	/**
+	 * Code background: applies background color to inline and block code content.
+	 */
+	codeBackground(documentText: string): Decoration[] {
+		if (!this.activeEditor) {
+			return [];
+		}
+
+		const decorations: Decoration[] = [];
+		let match;
+
+		const inlineRegex = new RegExp(INLINE_CODE_REGEX.source, INLINE_CODE_REGEX.flags);
+		while ((match = inlineRegex.exec(documentText))) {
+			const fullRange = this.range(match.index, match.index + match[0].length);
+			decorations.push({range: fullRange, parent: fullRange, type: this.inlineCodeBackgroundDecorationType!});
+		}
+
+		const blockRegex = new RegExp(BLOCK_CODE_REGEX.source, BLOCK_CODE_REGEX.flags);
+		while ((match = blockRegex.exec(documentText))) {
+			const openFence = match[1] ?? '';
+			const closeFence = match[4] ?? '';
+			const contentStart = match.index + openFence.length;
+			const contentEnd = match.index + match[0].length - closeFence.length;
+			if (contentStart < contentEnd) {
+				const parent = this.range(match.index, match.index + match[0].length);
+				decorations.push({range: this.range(contentStart, contentEnd), parent, type: this.blockCodeBackgroundDecorationType!});
+			}
+		}
+
+		return decorations;
 	}
 
 	/**
@@ -490,5 +534,23 @@ export class Decorator {
 			this.activeEditor!.document.positionAt(start),
 			this.activeEditor!.document.positionAt(end),
 		);
+	}
+
+	private updateCodeBackgroundDecorationTypes(color: string) {
+		if (color === this.codeBackgroundColor) {
+			return;
+		}
+
+		this.inlineCodeBackgroundDecorationType?.dispose();
+		this.blockCodeBackgroundDecorationType?.dispose();
+		if (color) {
+			this.inlineCodeBackgroundDecorationType = InlineCodeBackgroundDecorationType(color);
+			this.blockCodeBackgroundDecorationType = BlockCodeBackgroundDecorationType(color);
+		} else {
+			this.inlineCodeBackgroundDecorationType = undefined;
+			this.blockCodeBackgroundDecorationType = undefined;
+		}
+
+		this.codeBackgroundColor = color;
 	}
 }

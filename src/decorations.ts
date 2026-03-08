@@ -60,3 +60,17 @@ export function HorizontalLineDecorationType() {
 		},
 	});
 }
+
+export function InlineCodeBackgroundDecorationType(color: string) {
+	return window.createTextEditorDecorationType({
+		backgroundColor: color,
+		borderRadius: '3px',
+	});
+}
+
+export function BlockCodeBackgroundDecorationType(color: string) {
+	return window.createTextEditorDecorationType({
+		backgroundColor: color,
+		isWholeLine: true,
+	});
+}

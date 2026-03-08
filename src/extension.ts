@@ -17,7 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	const changeConfiguration = vscode.workspace.onDidChangeConfiguration((event) => {
-		if (event.affectsConfiguration('markdownInlinePreview.hideAliasedURIs')) {
+		if (event.affectsConfiguration('markdownInlinePreview')) {
 			decorator.updateDecorations();
 		}
 	});

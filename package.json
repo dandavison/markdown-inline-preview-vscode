@@ -81,6 +81,11 @@
           "type": "boolean",
           "default": true,
           "description": "Replace horizontal line syntax (---, ***, ___) with an actual horizontal line."
+        },
+        "markdownInlinePreview.codeBlockBackgroundColor": {
+          "type": "string",
+          "default": "#EEEEEE",
+          "description": "Background color for inline code and fenced code blocks. Set to empty string to disable."
         }
       }
     }
