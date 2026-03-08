@@ -116,7 +116,7 @@ export class Decorator {
 			codeDecorations.push(...this.blockCode(documentText));
 		}
 
-		const bgColor = config.get<string>('codeBlockBackgroundColor', '#EEEEEE');
+		const bgColor = config.get<string>('codeBlockBackgroundColor', '#EEEEEEBB');
 		this.updateCodeBackgroundDecorationTypes(bgColor);
 		if (this.inlineCodeBackgroundDecorationType && this.blockCodeBackgroundDecorationType) {
 			codeDecorations.push(...this.codeBackground(documentText));

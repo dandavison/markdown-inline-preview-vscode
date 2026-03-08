@@ -84,7 +84,7 @@
         },
         "markdownInlinePreview.codeBlockBackgroundColor": {
           "type": "string",
-          "default": "#EEEEEE",
+          "default": "#EEEEEEBB",
           "description": "Background color for inline code and fenced code blocks. Set to empty string to disable."
         }
       }
