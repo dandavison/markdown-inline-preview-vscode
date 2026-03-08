@@ -26,6 +26,10 @@
   "contributes": {
     "commands": [
       {
+        "command": "markdownInlinePreview.toggleEnabled",
+        "title": "Markdown Inline Preview: Toggle On/Off"
+      },
+      {
         "command": "markdownInlinePreview.toggleRevealOnCursor",
         "title": "Markdown Inline Preview: Toggle Reveal on Cursor"
       }

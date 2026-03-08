@@ -56,6 +56,8 @@ export class Decorator {
 
 	horizontalLineDecorationType = HorizontalLineDecorationType();
 
+	enabled = true;
+
 	revealOnCursor = true;
 
 	private inlineCodeBackgroundDecorationType: TextEditorDecorationType | undefined;
@@ -77,12 +79,46 @@ export class Decorator {
 		this.updateDecorations();
 	}
 
+	clearDecorations() {
+		if (!this.activeEditor) {
+			return;
+		}
+
+		const allTypes = [
+			this.hideDecorationType,
+			this.defaultColorDecorationType,
+			this.xxlTextDecorationType,
+			this.xlTextDecorationType,
+			this.lTextDecorationType,
+			this.URIDecorationType,
+			this.spaceAfterDecorationType,
+			this.horizontalLineDecorationType,
+			this.inlineCodeBackgroundDecorationType,
+			this.blockCodeBackgroundDecorationType,
+		];
+		for (const type of allTypes) {
+			if (type) {
+				this.activeEditor.setDecorations(type, []);
+			}
+		}
+
+		if (this.linkProvider) {
+			this.linkProvider.links = [];
+			this.linkProvider.triggerUpdate();
+		}
+	}
+
 	updateDecorations() {
 		if (!this.activeEditor) {
 			return;
 		}
 
 		if (!['markdown', 'md', 'mdx'].includes(this.activeEditor.document.languageId)) {
+			return;
+		}
+
+		if (!this.enabled) {
+			this.clearDecorations();
 			return;
 		}
 
