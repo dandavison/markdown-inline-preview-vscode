@@ -33,7 +33,7 @@ export class Decorator {
 	 * Checks if a range overlaps with any code block or inline code range.
 	 */
 	static isInsideCodeBlock(range: Range, codeBlockRanges: Range[]): boolean {
-		return codeBlockRanges.some((codeRange) => codeRange.contains(range));
+		return codeBlockRanges.some((codeRange) => codeRange.intersection(range) !== undefined);
 	}
 
 	activeEditor: TextEditor | undefined;
