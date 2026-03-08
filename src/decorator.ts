@@ -56,6 +56,8 @@ export class Decorator {
 
 	horizontalLineDecorationType = HorizontalLineDecorationType();
 
+	revealOnCursor = true;
+
 	private inlineCodeBackgroundDecorationType: TextEditorDecorationType | undefined;
 
 	private blockCodeBackgroundDecorationType: TextEditorDecorationType | undefined;
@@ -147,9 +149,11 @@ export class Decorator {
 		// Apply decorations, skipping those in selected lines or inside code blocks
 		const decorationMap = new Map<TextEditorDecorationType, Range[]>();
 
+		const isSelected = (range: Range) => this.revealOnCursor && this.isLineOfRangeSelected(range);
+
 		// Code decorations are only filtered by selection, not by code block containment
 		codeDecorations.forEach((decoration) => {
-			if (!this.isLineOfRangeSelected(decoration.parent)) {
+			if (!isSelected(decoration.parent)) {
 				const existing = decorationMap.get(decoration.type) || [];
 				existing.push(decoration.range);
 				decorationMap.set(decoration.type, existing);
@@ -158,7 +162,7 @@ export class Decorator {
 
 		// All other decorations are also filtered by code block containment
 		allDecorations.forEach((decoration) => {
-			if (!this.isLineOfRangeSelected(decoration.parent) && !Decorator.isInsideCodeBlock(decoration.parent, codeBlockRanges)) {
+			if (!isSelected(decoration.parent) && !Decorator.isInsideCodeBlock(decoration.parent, codeBlockRanges)) {
 				const existing = decorationMap.get(decoration.type) || [];
 				existing.push(decoration.range);
 				decorationMap.set(decoration.type, existing);
@@ -166,7 +170,7 @@ export class Decorator {
 		});
 
 		if (this.linkProvider) {
-			const filteredLinks = allLinks.filter((link) => !this.isLineOfRangeSelected(link.range) && !Decorator.isInsideCodeBlock(link.range, codeBlockRanges));
+			const filteredLinks = allLinks.filter((link) => !isSelected(link.range) && !Decorator.isInsideCodeBlock(link.range, codeBlockRanges));
 			this.linkProvider.links = filteredLinks;
 			this.linkProvider.triggerUpdate();
 		}

@@ -24,6 +24,12 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "markdownInlinePreview.toggleRevealOnCursor",
+        "title": "Markdown Inline Preview: Toggle Reveal on Cursor"
+      }
+    ],
     "configuration": {
       "title": "Markdown Inline Preview",
       "properties": {
