@@ -27,10 +27,23 @@ export function activate(context: vscode.ExtensionContext) {
 		linkProviderInstance,
 	);
 
+	const revealStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
+	revealStatusBarItem.command = 'markdownInlinePreview.toggleRevealOnCursor';
+
+	const updateRevealStatus = () => {
+		if (decorator.revealOnCursor) {
+			revealStatusBarItem.hide();
+		} else {
+			revealStatusBarItem.text = '👁';
+			revealStatusBarItem.tooltip = 'Markdown: reveal on cursor off (click to toggle)';
+			revealStatusBarItem.show();
+		}
+	};
+
 	const toggleRevealOnCursor = vscode.commands.registerCommand('markdownInlinePreview.toggleRevealOnCursor', () => {
 		decorator.revealOnCursor = !decorator.revealOnCursor;
 		decorator.updateDecorations();
-		vscode.window.setStatusBarMessage(`Markdown reveal on cursor: ${decorator.revealOnCursor ? 'on' : 'off'}`, 3000);
+		updateRevealStatus();
 	});
 
 	context.subscriptions.push(changeActiveTextEditor);
@@ -38,6 +51,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(changeConfiguration);
 	context.subscriptions.push(linkProvider);
 	context.subscriptions.push(toggleRevealOnCursor);
+	context.subscriptions.push(revealStatusBarItem);
 }
 
 export function deactivate(context: vscode.ExtensionContext) {
