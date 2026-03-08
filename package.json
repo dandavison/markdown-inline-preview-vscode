@@ -4,7 +4,7 @@
   "description": "A VS Code extension for improving the display of markdown directly in the editor",
   "license": "MIT",
   "author": "Adam Jones (domdomegg)",
-  "publisher": "domdomegg",
+  "publisher": "dan",
   "icon": "branding/icon.jpg",
   "private": "true",
   "repository": {
