@@ -121,6 +121,19 @@ suite('Decorator – code block filtering', () => {
 		assert.strictEqual(headings.length, 0, 'TOML comment should not be decorated as heading');
 	});
 
+	test('code blocks at end of file without trailing newline are detected', async () => {
+		const content = '```\n# not a heading\n```';
+		const {decorator, doc} = await setupEditor(content);
+
+		const documentText = doc.getText();
+		const codeBlockRanges = decorator.getCodeBlockRanges(documentText);
+		assert.ok(codeBlockRanges.length > 0, 'should detect code block without trailing newline');
+
+		const headings = decorator.headings(documentText)
+			.filter((d) => !Decorator.isInsideCodeBlock(d.parent, codeBlockRanges));
+		assert.strictEqual(headings.length, 0, 'content should not be decorated as heading');
+	});
+
 	test('decorations outside code blocks are unaffected', async () => {
 		const {decorator, doc} = await setupEditor([
 			'# Heading 1',
