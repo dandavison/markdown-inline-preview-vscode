@@ -152,6 +152,15 @@ suite('Decorator – code block filtering', () => {
 		});
 	});
 
+	test('underscores in identifiers are not treated as italic', async () => {
+		const {decorator, doc} = await setupEditor('| `_workflow.py` | `_discover_workflows()` |');
+
+		const documentText = doc.getText();
+		const italicDecorations = decorator.italic(documentText);
+
+		assert.strictEqual(italicDecorations.length, 0, 'no italic decorations for mid-word underscores');
+	});
+
 	test('aliased URIs with relative paths are detected', async () => {
 		const {decorator, doc} = await setupEditor('See [List Filter](/list-filter) for details.');
 

@@ -14,8 +14,10 @@ type Decoration = {
 
 // Regex patterns for markdown syntax
 // Note: not in the respective function to avoid recompilation on each call
-const BOLD_REGEX = /(\*{2}|_{2})((?=[^\s*_]).*?[^\s*_])(\1)/g;
-const ITALIC_REGEX = /(?<!\*|_)(\*|_)((?=[^\s*_]).*?[^\s*_])(\1)(?!\*|_)/g;
+const BOLD_STAR_REGEX = /(\*{2})((?=[^\s*]).*?[^\s*])(\1)/g;
+const BOLD_UNDERSCORE_REGEX = /(?<!\w)(_{2})((?=[^\s_]).*?[^\s_])(_{2})(?!\w)/g;
+const ITALIC_STAR_REGEX = /(?<!\*)(\*)((?=[^\s*]).*?[^\s*])(\*)(?!\*)/g;
+const ITALIC_UNDERSCORE_REGEX = /(?<!\w)(_)((?=[^\s_]).*?[^\s_])(_)(?!\w)/g;
 const STRIKETHROUGH_REGEX = /(?<!~)(~{2})((?=[^\s~]).*?[^\s~])(~{2})(?!~)/g;
 const INLINE_CODE_REGEX = /(`)((?=[^\s`]).*?[^\s`])(`)/g;
 const BLOCK_CODE_REGEX = /((`{3}|~{3})[^\n]*\n)(.*\n)*?(\2\n?)/g;
@@ -238,8 +240,14 @@ export class Decorator {
    * Hides the ** or __ symbols, applies default color to content
    */
 	bold(documentText: string): Decoration[] {
-		const hideRanges = this.getSymmetricHideRanges(documentText, BOLD_REGEX);
-		const colorRanges = this.getFullMatchRanges(documentText, BOLD_REGEX);
+		const hideRanges = [
+			...this.getSymmetricHideRanges(documentText, BOLD_STAR_REGEX),
+			...this.getSymmetricHideRanges(documentText, BOLD_UNDERSCORE_REGEX),
+		];
+		const colorRanges = [
+			...this.getFullMatchRanges(documentText, BOLD_STAR_REGEX),
+			...this.getFullMatchRanges(documentText, BOLD_UNDERSCORE_REGEX),
+		];
 
 		return [
 			...hideRanges.map(({range, parent}) => ({range, parent, type: this.hideDecorationType})),
@@ -252,8 +260,14 @@ export class Decorator {
    * Hides the * or _ symbols, applies default color to content
    */
 	italic(documentText: string): Decoration[] {
-		const hideRanges = this.getSymmetricHideRanges(documentText, ITALIC_REGEX);
-		const colorRanges = this.getFullMatchRanges(documentText, ITALIC_REGEX);
+		const hideRanges = [
+			...this.getSymmetricHideRanges(documentText, ITALIC_STAR_REGEX),
+			...this.getSymmetricHideRanges(documentText, ITALIC_UNDERSCORE_REGEX),
+		];
+		const colorRanges = [
+			...this.getFullMatchRanges(documentText, ITALIC_STAR_REGEX),
+			...this.getFullMatchRanges(documentText, ITALIC_UNDERSCORE_REGEX),
+		];
 
 		return [
 			...hideRanges.map(({range, parent}) => ({range, parent, type: this.hideDecorationType})),
