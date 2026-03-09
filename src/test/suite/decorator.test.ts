@@ -104,6 +104,23 @@ suite('Decorator – code block filtering', () => {
 		});
 	});
 
+	test('code blocks with info strings containing spaces are detected', async () => {
+		const {decorator, doc} = await setupEditor([
+			'```toml title="config.toml"',
+			'# this is a TOML comment',
+			'[profile.default]',
+			'```',
+		].join('\n'));
+
+		const documentText = doc.getText();
+		const codeBlockRanges = decorator.getCodeBlockRanges(documentText);
+		assert.ok(codeBlockRanges.length > 0, 'should detect code block with info string containing spaces');
+
+		const headings = decorator.headings(documentText)
+			.filter((d) => !Decorator.isInsideCodeBlock(d.parent, codeBlockRanges));
+		assert.strictEqual(headings.length, 0, 'TOML comment should not be decorated as heading');
+	});
+
 	test('decorations outside code blocks are unaffected', async () => {
 		const {decorator, doc} = await setupEditor([
 			'# Heading 1',
