@@ -134,6 +134,24 @@ suite('Decorator – code block filtering', () => {
 		assert.strictEqual(headings.length, 0, 'content should not be decorated as heading');
 	});
 
+	test('italic regex does not match underscores spanning across code span boundaries', async () => {
+		const {decorator, doc} = await setupEditor('Use `TEMPORAL_NAMESPACE` for the _config_ variable');
+
+		const documentText = doc.getText();
+		const codeBlockRanges = decorator.getCodeBlockRanges(documentText);
+
+		const italicDecorations = decorator.italic(documentText)
+			.filter((d) => !Decorator.isInsideCodeBlock(d.parent, codeBlockRanges));
+
+		// Only _config_ should produce italic decorations, not the _ in TEMPORAL_NAMESPACE
+		italicDecorations.forEach((d) => {
+			assert.ok(
+				d.range.start.character >= 37,
+				`italic decoration at char ${d.range.start.character} should only be for "_config_" near end of line`,
+			);
+		});
+	});
+
 	test('decorations outside code blocks are unaffected', async () => {
 		const {decorator, doc} = await setupEditor([
 			'# Heading 1',
