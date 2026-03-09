@@ -152,6 +152,17 @@ suite('Decorator – code block filtering', () => {
 		});
 	});
 
+	test('aliased URIs with relative paths are detected', async () => {
+		const {decorator, doc} = await setupEditor('See [List Filter](/list-filter) for details.');
+
+		const documentText = doc.getText();
+		const result = decorator.aliasedURI(documentText);
+
+		assert.ok(result.decorations.length > 0, 'should produce decorations for relative path link');
+		assert.ok(result.linkData.length > 0, 'should produce link data for relative path link');
+		assert.strictEqual(result.linkData[0]?.target, '/list-filter');
+	});
+
 	test('decorations outside code blocks are unaffected', async () => {
 		const {decorator, doc} = await setupEditor([
 			'# Heading 1',
