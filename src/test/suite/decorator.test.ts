@@ -172,6 +172,64 @@ suite('Decorator – code block filtering', () => {
 		assert.strictEqual(result.linkData[0]?.target, '/list-filter');
 	});
 
+	test('tables: pipes are hidden and header is bolded', async () => {
+		const {decorator, doc} = await setupEditor([
+			'| Name | Value |',
+			'|------|-------|',
+			'| foo  | 42    |',
+			'| bar  | 99    |',
+		].join('\n'));
+
+		const documentText = doc.getText();
+		const decorations = decorator.table(documentText);
+
+		// Pipes: 3 per row × 3 rows (header + 2 body) = 9 hide decorations
+		// Separator: 1 hide decoration
+		// Header: 1 bold decoration
+		const hideDecorations = decorations.filter((d) => d.type === decorator.hideDecorationType);
+		const headerDecorations = decorations.filter((d) => d.type === decorator.tableHeaderDecorationType);
+		const separatorDecorations = decorations.filter((d) => d.type === decorator.tableSeparatorDecorationType);
+
+		assert.strictEqual(hideDecorations.length, 9, 'should hide 9 pipe characters (3 per non-separator row)');
+		assert.strictEqual(headerDecorations.length, 1, 'should bold the header row');
+		assert.strictEqual(separatorDecorations.length, 1, 'should hide the separator row');
+
+		// Header decoration should be on line 0
+		assert.strictEqual(headerDecorations[0]?.range.start.line, 0);
+
+		// Separator decoration should be on line 1
+		assert.strictEqual(separatorDecorations[0]?.range.start.line, 1);
+	});
+
+	test('tables: pipes inside inline code are filtered by code block ranges', async () => {
+		const {decorator, doc} = await setupEditor([
+			'| Code | Result |',
+			'|------|--------|',
+			'| `a|b` | yes  |',
+		].join('\n'));
+
+		const documentText = doc.getText();
+		const codeBlockRanges = decorator.getCodeBlockRanges(documentText);
+		const decorations = decorator.table(documentText);
+
+		// The pipe inside `a|b` should be filtered out by code block ranges
+		const filteredHides = decorations
+			.filter((d) => d.type === decorator.hideDecorationType)
+			.filter((d) => !Decorator.isInsideCodeBlock(d.parent, codeBlockRanges));
+
+		// 3 pipes on header row + 2 outer pipes on body row = 5 (pipe inside code filtered)
+		assert.strictEqual(filteredHides.length, 5, 'pipe inside inline code should be filtered out');
+	});
+
+	test('tables: non-table pipe lines are not matched', async () => {
+		const {decorator, doc} = await setupEditor('| just a line with pipes |');
+
+		const documentText = doc.getText();
+		const decorations = decorator.table(documentText);
+
+		assert.strictEqual(decorations.length, 0, 'single pipe line without separator is not a table');
+	});
+
 	test('decorations outside code blocks are unaffected', async () => {
 		const {decorator, doc} = await setupEditor([
 			'# Heading 1',

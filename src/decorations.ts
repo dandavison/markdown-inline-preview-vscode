@@ -61,6 +61,23 @@ export function HorizontalLineDecorationType() {
 	});
 }
 
+export function TableHeaderDecorationType() {
+	return window.createTextEditorDecorationType({
+		fontWeight: 'bold',
+		color: new ThemeColor('editor.foreground'),
+	});
+}
+
+export function TableSeparatorDecorationType() {
+	return window.createTextEditorDecorationType({
+		textDecoration: 'none; display: none;',
+		after: {
+			contentText: '─'.repeat(40),
+			color: new ThemeColor('editorLineNumber.foreground'),
+		},
+	});
+}
+
 export function InlineCodeBackgroundDecorationType(color: string) {
 	return window.createTextEditorDecorationType({
 		backgroundColor: color,

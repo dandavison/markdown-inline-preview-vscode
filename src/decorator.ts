@@ -2,7 +2,7 @@ import {
 	Range, type TextEditor, workspace, type TextEditorDecorationType,
 } from 'vscode';
 import {
-	DefaultColorDecorationType, HideDecorationType, XxlTextDecorationType, XlTextDecorationType, LTextDecorationType, URIDecorationType, SpaceAfterDecorationType, HorizontalLineDecorationType, InlineCodeBackgroundDecorationType, BlockCodeBackgroundDecorationType,
+	DefaultColorDecorationType, HideDecorationType, XxlTextDecorationType, XlTextDecorationType, LTextDecorationType, URIDecorationType, SpaceAfterDecorationType, HorizontalLineDecorationType, TableHeaderDecorationType, TableSeparatorDecorationType, InlineCodeBackgroundDecorationType, BlockCodeBackgroundDecorationType,
 } from './decorations';
 import {type LinkData, type MarkdownDocumentLinkProvider} from './documentLinkProvider';
 
@@ -29,6 +29,7 @@ const H1_REGEX = /^[ \t]*#{1}([ \t].*|$)/gm;
 const H2_REGEX = /^[ \t]*#{2}([ \t].*|$)/gm;
 const H3_REGEX = /^[ \t]*#{3}([ \t].*|$)/gm;
 const HORIZONTAL_LINE_REGEX = /(?:\r?\n)[ \t]*(?:\r?\n)([ \t]*)(-{3,}|\*{3,}|_{3,})([ \t]*)(?=(?:\r?\n)[ \t]*(?:\r?\n))/g;
+const TABLE_REGEX = /^([ \t]*\|.+\|[ \t]*)\r?\n([ \t]*\|[ \t]*:?-+:?[ \t]*(?:\|[ \t]*:?-+:?[ \t]*)*\|[ \t]*)\r?\n((?:[ \t]*\|.+\|[ \t]*(?:\r?\n|$))+)/gm;
 
 export class Decorator {
 	/**
@@ -57,6 +58,10 @@ export class Decorator {
 	spaceAfterDecorationType = SpaceAfterDecorationType();
 
 	horizontalLineDecorationType = HorizontalLineDecorationType();
+
+	tableHeaderDecorationType = TableHeaderDecorationType();
+
+	tableSeparatorDecorationType = TableSeparatorDecorationType();
 
 	enabled = true;
 
@@ -95,6 +100,8 @@ export class Decorator {
 			this.URIDecorationType,
 			this.spaceAfterDecorationType,
 			this.horizontalLineDecorationType,
+			this.tableHeaderDecorationType,
+			this.tableSeparatorDecorationType,
 			this.inlineCodeBackgroundDecorationType,
 			this.blockCodeBackgroundDecorationType,
 		];
@@ -169,6 +176,10 @@ export class Decorator {
 
 		if (config.get<boolean>('horizontalLine', true)) {
 			allDecorations.push(...this.horizontalLine(documentText));
+		}
+
+		if (config.get<boolean>('table', true)) {
+			allDecorations.push(...this.table(documentText));
 		}
 
 		if (config.get<boolean>('aliasedURIs', false)) {
@@ -511,6 +522,56 @@ export class Decorator {
 		return decorations;
 	}
 
+	/**
+	 * Tables: | h1 | h2 |\n|---|---|\n| c1 | c2 |
+	 * Hides pipe characters, hides separator row, bolds header row
+	 */
+	table(documentText: string): Decoration[] {
+		if (!this.activeEditor) {
+			return [];
+		}
+
+		const decorations: Decoration[] = [];
+		const regex = new RegExp(TABLE_REGEX.source, TABLE_REGEX.flags);
+		let match;
+
+		while ((match = regex.exec(documentText))) {
+			const headerText = match[1]!;
+			const separatorText = match[2]!;
+			const bodyText = match[3]!;
+
+			const headerStart = match.index;
+			decorations.push(...this.tablePipeDecorations(headerText, headerStart));
+			const headerRange = this.range(headerStart, headerStart + headerText.length);
+			decorations.push({range: headerRange, parent: headerRange, type: this.tableHeaderDecorationType});
+
+			const separatorStart = headerStart + headerText.length
+				+ (documentText[headerStart + headerText.length] === '\r' ? 2 : 1);
+			const separatorRange = this.range(separatorStart, separatorStart + separatorText.length);
+			decorations.push({range: separatorRange, parent: separatorRange, type: this.tableSeparatorDecorationType});
+
+			const bodyStart = separatorStart + separatorText.length
+				+ (documentText[separatorStart + separatorText.length] === '\r' ? 2 : 1);
+			let rowOffset = bodyStart;
+			for (const row of bodyText.split(/\r?\n/)) {
+				if (row.length > 0) {
+					decorations.push(...this.tablePipeDecorations(row, rowOffset));
+				}
+
+				rowOffset += row.length;
+				if (documentText[rowOffset] === '\r') {
+					rowOffset += 1;
+				}
+
+				if (documentText[rowOffset] === '\n') {
+					rowOffset += 1;
+				}
+			}
+		}
+
+		return decorations;
+	}
+
 	// ============================================================================
 	// Helper Functions
 	// ============================================================================
@@ -602,6 +663,18 @@ export class Decorator {
 			this.activeEditor!.document.positionAt(start),
 			this.activeEditor!.document.positionAt(end),
 		);
+	}
+
+	private tablePipeDecorations(row: string, rowStart: number): Decoration[] {
+		const decorations: Decoration[] = [];
+		for (let i = 0; i < row.length; i++) {
+			if (row[i] === '|') {
+				const pipeRange = this.range(rowStart + i, rowStart + i + 1);
+				decorations.push({range: pipeRange, parent: pipeRange, type: this.hideDecorationType});
+			}
+		}
+
+		return decorations;
 	}
 
 	private updateCodeBackgroundDecorationTypes(color: string) {

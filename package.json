@@ -92,6 +92,11 @@
           "default": true,
           "description": "Replace horizontal line syntax (---, ***, ___) with an actual horizontal line."
         },
+        "markdownInlinePreview.table": {
+          "type": "boolean",
+          "default": true,
+          "description": "Render tables by hiding pipe characters and separator rows, bolding the header row."
+        },
         "markdownInlinePreview.codeBlockBackgroundColor": {
           "type": "string",
           "default": "#EEEEEEBB",
