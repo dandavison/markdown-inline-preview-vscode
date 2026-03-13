@@ -188,7 +188,8 @@ suite('Decorator – code block filtering', () => {
 		// Header: 1 bold decoration
 		const hideDecorations = decorations.filter((d) => d.type === decorator.hideDecorationType);
 		const headerDecorations = decorations.filter((d) => d.type === decorator.tableHeaderDecorationType);
-		const separatorDecorations = decorations.filter((d) => d.type === decorator.tableSeparatorDecorationType);
+		const knownTypes = new Set([decorator.hideDecorationType, decorator.tableHeaderDecorationType]);
+		const separatorDecorations = decorations.filter((d) => !knownTypes.has(d.type));
 
 		assert.strictEqual(hideDecorations.length, 9, 'should hide 9 pipe characters (3 per non-separator row)');
 		assert.strictEqual(headerDecorations.length, 1, 'should bold the header row');

@@ -68,11 +68,11 @@ export function TableHeaderDecorationType() {
 	});
 }
 
-export function TableSeparatorDecorationType() {
+export function TableSeparatorDecorationType(width: number) {
 	return window.createTextEditorDecorationType({
 		textDecoration: 'none; display: none;',
 		after: {
-			contentText: '─'.repeat(40),
+			contentText: '─'.repeat(width),
 			color: new ThemeColor('editorLineNumber.foreground'),
 		},
 	});

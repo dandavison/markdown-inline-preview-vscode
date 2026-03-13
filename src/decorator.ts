@@ -61,11 +61,11 @@ export class Decorator {
 
 	tableHeaderDecorationType = TableHeaderDecorationType();
 
-	tableSeparatorDecorationType = TableSeparatorDecorationType();
-
 	enabled = true;
 
 	revealOnCursor = true;
+
+	private readonly tableSeparatorDecorationTypes = new Map<number, TextEditorDecorationType>();
 
 	private inlineCodeBackgroundDecorationType: TextEditorDecorationType | undefined;
 
@@ -101,7 +101,7 @@ export class Decorator {
 			this.spaceAfterDecorationType,
 			this.horizontalLineDecorationType,
 			this.tableHeaderDecorationType,
-			this.tableSeparatorDecorationType,
+			...this.tableSeparatorDecorationTypes.values(),
 			this.inlineCodeBackgroundDecorationType,
 			this.blockCodeBackgroundDecorationType,
 		];
@@ -548,7 +548,9 @@ export class Decorator {
 			const separatorStart = headerStart + headerText.length
 				+ (documentText[headerStart + headerText.length] === '\r' ? 2 : 1);
 			const separatorRange = this.range(separatorStart, separatorStart + separatorText.length);
-			decorations.push({range: separatorRange, parent: separatorRange, type: this.tableSeparatorDecorationType});
+			const pipeCount = separatorText.split('|').length - 1;
+			const visualWidth = separatorText.length - pipeCount;
+			decorations.push({range: separatorRange, parent: separatorRange, type: this.getTableSeparatorDecorationType(visualWidth)});
 
 			const bodyStart = separatorStart + separatorText.length
 				+ (documentText[separatorStart + separatorText.length] === '\r' ? 2 : 1);
@@ -663,6 +665,16 @@ export class Decorator {
 			this.activeEditor!.document.positionAt(start),
 			this.activeEditor!.document.positionAt(end),
 		);
+	}
+
+	private getTableSeparatorDecorationType(width: number): TextEditorDecorationType {
+		let type = this.tableSeparatorDecorationTypes.get(width);
+		if (!type) {
+			type = TableSeparatorDecorationType(width);
+			this.tableSeparatorDecorationTypes.set(width, type);
+		}
+
+		return type;
 	}
 
 	private tablePipeDecorations(row: string, rowStart: number): Decoration[] {
