@@ -29,6 +29,7 @@ const H1_REGEX = /^[ \t]*#{1}([ \t].*|$)/gm;
 const H2_REGEX = /^[ \t]*#{2}([ \t].*|$)/gm;
 const H3_REGEX = /^[ \t]*#{3}([ \t].*|$)/gm;
 const HORIZONTAL_LINE_REGEX = /(?:\r?\n)[ \t]*(?:\r?\n)([ \t]*)(-{3,}|\*{3,}|_{3,})([ \t]*)(?=(?:\r?\n)[ \t]*(?:\r?\n))/g;
+const BLOCK_MATH_REGEX = /(\$\$[ \t]*\n)((?:.*\n)*?)(\$\$[ \t]*(?:\n|$))/g;
 const TABLE_REGEX = /^([ \t]*\|.+\|[ \t]*)\r?\n([ \t]*\|[ \t]*:?-+:?[ \t]*(?:\|[ \t]*:?-+:?[ \t]*)*\|[ \t]*)\r?\n((?:[ \t]*\|.+\|[ \t]*(?:\r?\n|$))+)/gm;
 
 export class Decorator {
@@ -161,6 +162,10 @@ export class Decorator {
 
 		if (config.get<boolean>('blockCode', true)) {
 			codeDecorations.push(...this.blockCode(documentText));
+		}
+
+		if (config.get<boolean>('mathBlock', true)) {
+			codeDecorations.push(...this.mathBlock(documentText));
 		}
 
 		const bgColor = config.get<string>('codeBlockBackgroundColor', '#EEEEEEBB');
@@ -314,6 +319,15 @@ export class Decorator {
 	}
 
 	/**
+	 * Math block: $$\n...\n$$
+	 * Hides the $$ delimiters
+	 */
+	mathBlock(documentText: string): Decoration[] {
+		return this.getSymmetricHideRanges(documentText, BLOCK_MATH_REGEX)
+			.map(({range, parent}) => ({range, parent, type: this.hideDecorationType}));
+	}
+
+	/**
 	 * Code background: applies background color to inline and block code content.
 	 */
 	codeBackground(documentText: string): Decoration[] {
@@ -336,6 +350,18 @@ export class Decorator {
 			const closeFence = match[4] ?? '';
 			const contentStart = match.index + openFence.length;
 			const contentEnd = match.index + match[0].length - closeFence.length - 1;
+			if (contentStart <= contentEnd) {
+				const parent = this.range(match.index, match.index + match[0].length);
+				decorations.push({range: this.range(contentStart, contentEnd), parent, type: this.blockCodeBackgroundDecorationType!});
+			}
+		}
+
+		const mathRegex = new RegExp(BLOCK_MATH_REGEX.source, BLOCK_MATH_REGEX.flags);
+		while ((match = mathRegex.exec(documentText))) {
+			const openDelim = match[1] ?? '';
+			const closeDelim = match[3] ?? '';
+			const contentStart = match.index + openDelim.length;
+			const contentEnd = match.index + match[0].length - closeDelim.length - 1;
 			if (contentStart <= contentEnd) {
 				const parent = this.range(match.index, match.index + match[0].length);
 				decorations.push({range: this.range(contentStart, contentEnd), parent, type: this.blockCodeBackgroundDecorationType!});
@@ -597,6 +623,11 @@ export class Decorator {
 
 		const inlineRegex = new RegExp(INLINE_CODE_REGEX.source, INLINE_CODE_REGEX.flags);
 		while ((match = inlineRegex.exec(documentText))) {
+			ranges.push(this.range(match.index, match.index + match[0].length));
+		}
+
+		const mathRegex = new RegExp(BLOCK_MATH_REGEX.source, BLOCK_MATH_REGEX.flags);
+		while ((match = mathRegex.exec(documentText))) {
 			ranges.push(this.range(match.index, match.index + match[0].length));
 		}
 

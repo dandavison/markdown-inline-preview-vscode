@@ -62,6 +62,11 @@
           "default": true,
           "description": "Hide code block syntax markers (```language)."
         },
+        "markdownInlinePreview.mathBlock": {
+          "type": "boolean",
+          "default": true,
+          "description": "Hide math block syntax markers ($$...$$)."
+        },
         "markdownInlinePreview.simpleURI": {
           "type": "boolean",
           "default": true,
